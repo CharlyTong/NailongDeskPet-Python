@@ -40,14 +40,15 @@ class ChatConfig:
 
     @classmethod
     def load(cls) -> "ChatConfig":
-        """按 windows/ → 项目根 的顺序找 config.json"""
-        here = os.path.dirname(os.path.abspath(__file__))
-        for path in (os.path.join(here, "config.json"),
-                     os.path.join(here, "..", "config.json")):
+        """找 config.json：exe 旁边（打包后）→ 脚本目录 → 上级目录（源码开发）"""
+        from paths import app_dir
+        base = app_dir()
+        for path in (os.path.join(base, "config.json"),
+                     os.path.join(base, "..", "config.json")):
             if os.path.exists(path):
                 with open(path, "r", encoding="utf-8") as f:
                     return cls(**json.load(f))
-        print("⚠️ 未找到 config.json（windows/ 或项目根）")
+        print(f"⚠️ 未找到 config.json（在 {base} 放一份，参考 config.example.json）")
         return cls()   # 空配置：API 调用会失败，但桌宠本地功能照常
 
     @property

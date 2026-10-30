@@ -19,9 +19,10 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QPainter, QPixmap, QTransform
 from PySide6.QtWidgets import QWidget, QMenu
 
-from pet_engine import PET_SIZE, HERE
+from pet_engine import PET_SIZE
+from paths import resource_dir
 
-SPRITES_DIR = os.path.join(HERE, "sprites")
+SPRITES_DIR = os.path.join(resource_dir(), "sprites")
 
 
 def mac_join_all_spaces(widget):

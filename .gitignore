@@ -12,3 +12,7 @@ __pycache__/
 # macOS / Windows 系统杂项
 .DS_Store
 Thumbs.db
+
+# PyInstaller 打包产物
+build/
+dist/

@@ -39,8 +39,8 @@ GRAVITY = 900            # 重力加速度（像素/秒²）
 GROUND_GAP = 2           # 判定"在空中"的容差
 MEMORY_LIMIT = 60        # 聊天记忆上限条数
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-HISTORY_PATH = os.path.join(HERE, "chat_history.json")   # 私人数据，已在 .gitignore
+from paths import resource_dir, app_dir
+HISTORY_PATH = os.path.join(app_dir(), "chat_history.json")   # 私人数据，已在 .gitignore
 
 
 class PetEngine(QObject):
@@ -420,7 +420,7 @@ class PetEngine(QObject):
     def sprite_config(self) -> dict:
         if not hasattr(self, "_sprite_cfg"):
             try:
-                with open(os.path.join(HERE, "sprites", "SpriteConfig.json"),
+                with open(os.path.join(resource_dir(), "sprites", "SpriteConfig.json"),
                           encoding="utf-8") as f:
                     self._sprite_cfg = json.load(f)["actions"]
             except (OSError, json.JSONDecodeError, KeyError):
