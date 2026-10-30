@@ -24,7 +24,7 @@ from PySide6.QtWidgets import QApplication, QWidget
 from pet_engine import PET_SIZE
 from pet_window import mac_join_all_spaces
 
-FONT_PT = 11          # 字号
+FONT_PT = 13          # 字号
 MAX_TEXT_W = 200      # 文字区最大宽度（再宽就折行）
 PAD_X = 20            # 文字左右内边距
 TAIL_H = 24           # 底部尾巴区高度
