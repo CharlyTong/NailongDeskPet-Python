@@ -1,0 +1,3 @@
+# Windows 版依赖清单：pip install -r requirements.txt
+# 刻意只依赖这一个包：网络请求用 Python 标准库 urllib，零额外安装。
+PySide6>=6.5

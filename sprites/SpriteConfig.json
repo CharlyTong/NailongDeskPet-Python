@@ -1,0 +1,11 @@
+{
+  "frameWidth": 96,
+  "frameHeight": 96,
+  "actions": {
+    "idle":  { "frames": 6, "fps": 6 },
+    "walk":  { "frames": 8, "fps": 12 },
+    "happy": { "frames": 8, "fps": 10 },
+    "drag":  { "frames": 6, "fps": 8 },
+    "fall":  { "frames": 5, "fps": 8 }
+  }
+}

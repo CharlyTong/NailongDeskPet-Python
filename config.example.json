@@ -1,0 +1,8 @@
+{
+  "base_url": "https://api.deepseek.com",
+  "api_key": "粘贴你的 DeepSeek API Key",
+  "model": "deepseek-chat",
+  "system_prompt": "你是一只住在用户桌面上的小宠物，性格软萌，用不超过30字的口语化中文回答。",
+  "temperature": 0.8,
+  "poke_temperature": 1.8
+}
