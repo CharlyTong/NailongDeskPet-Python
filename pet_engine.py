@@ -38,7 +38,6 @@ WALK_SPEED = 40          # 走路速度（像素/秒）
 GRAVITY = 900            # 重力加速度（像素/秒²）
 GROUND_GAP = 2           # 判定"在空中"的容差
 MEMORY_LIMIT = 60        # 聊天记忆上限条数
-BUBBLE_W, BUBBLE_H = 300, 100  # 气泡窗口尺寸
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 HISTORY_PATH = os.path.join(HERE, "chat_history.json")   # 私人数据，已在 .gitignore
