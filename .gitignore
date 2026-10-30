@@ -1,0 +1,14 @@
+# API Key 等秘密，绝不进 git 仓库
+config.json
+
+# 私人聊天记忆，不进仓库
+chat_history.json
+
+# 虚拟环境 / 缓存
+.venv/
+__pycache__/
+*.pyc
+
+# macOS / Windows 系统杂项
+.DS_Store
+Thumbs.db
