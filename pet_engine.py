@@ -52,6 +52,13 @@ class PetEngine(QObject):
     bubble_hide = Signal()          # 隐藏气泡
     chat_changed = Signal()         # 聊天历史变化（聊天窗重载）
     busy_changed = Signal(bool)     # API 请求进行中
+    # ---- 跨线程回调通道：工作线程 emit → Qt 自动排队投递回主线程 ----
+    # ⚠️ 不能用 QTimer.singleShot 从工作线程投递：Qt 定时器只允许在主线程
+    # 创建，从 threading.Thread 调用会静默失败，回调永远不执行（大坑，
+    # 症状：聊天"正在输入"永远转圈、busy 永不复位）。信号是线程安全的。
+    _chat_ok = Signal(str)          # 聊天拿到回复
+    _chat_fail = Signal(str)        # 聊天出错
+    _busy_off = Signal()            # 解除 busy（finally 必发）
 
     # 戳一戳本地兜底文案（没网/没配 Key 时随机蹦一句）
     POKE_LINES = ["我在。", "戳我干嘛？", "你有事吗", "牛来！", "我是奶龙",
@@ -89,6 +96,10 @@ class PetEngine(QObject):
         self._drag_base = (0, 0)      # 拖拽起点的窗口位置
         self._drag_start = (0, 0)     # 拖拽起点的全局光标位置
         self._poke_gen = 0            # 戳一戳的"代号"：新戳作废旧请求
+        # 跨线程信号 → 主线程槽（发送方在工作线程，Qt 自动排队投递）
+        self._chat_ok.connect(self._on_chat_ok)
+        self._chat_fail.connect(self._on_chat_fail)
+        self._busy_off.connect(lambda: self._set_busy(False))
 
     # ============================================================
     # 生命周期
@@ -284,18 +295,12 @@ class PetEngine(QObject):
         def worker():
             try:
                 reply = self.ai.send(history)
-                def ok():
-                    self.messages.append({"role": "assistant", "content": reply})
-                    self._after_reply()
-                    self.show_bubble(reply)
-                self._on_main(ok)                 # 回主线程改 UI 数据
+                self._chat_ok.emit(reply)
             except Exception as e:
-                msg = f"呜…出错了：{e}"
-                def fail():
-                    self.messages.append({"role": "assistant", "content": msg})
-                    self._after_reply()
-                    self.show_bubble(msg, duration=6)
-                self._on_main(fail)
+                self._chat_fail.emit(f"呜…出错了：{e}")
+            finally:
+                # 无论成败都必须解除"正在输入"（信号投递回主线程执行）
+                self._busy_off.emit()
 
         threading.Thread(target=worker, daemon=True).start()
 
@@ -313,22 +318,27 @@ class PetEngine(QObject):
         def worker():
             try:
                 reply = self.ai.send([{"role": "user", "content": "你好！请用一句话自我介绍。"}])
-                self._on_main(lambda: self.show_bubble(f"API 正常：{reply}"))
+                self.bubble_show.emit(f"API 正常：{reply}")
             except Exception as e:
-                self._on_main(lambda: self.show_bubble(f"失败：{e}", duration=8))
+                self.bubble_show.emit(f"失败：{e}")
             finally:
-                self._on_main(lambda: self._set_busy(False))
+                self._busy_off.emit()
 
         threading.Thread(target=worker, daemon=True).start()
+
+    def _on_chat_ok(self, reply: str):
+        self.messages.append({"role": "assistant", "content": reply})
+        self._after_reply()
+        self.show_bubble(reply)
+
+    def _on_chat_fail(self, msg: str):
+        self.messages.append({"role": "assistant", "content": msg})
+        self._after_reply()
+        self.show_bubble(msg, duration=6)
 
     def _after_reply(self):
         self._persist_memory()
         self.chat_changed.emit()
-
-    def _on_main(self, fn):
-        """把回调投递回主线程（QTimer.singleShot(0) 是最轻量的办法，
-        ≈ Swift 的 Task { @MainActor in }）"""
-        QTimer.singleShot(0, fn)
 
     def _set_busy(self, b: bool):
         self.is_busy = b
