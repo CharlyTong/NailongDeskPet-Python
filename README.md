@@ -80,14 +80,6 @@ cp config.example.json config.json
 └── requirements.txt  # 唯一依赖 PySide6
 ```
 
-## 若干设计要点（踩坑实录）
-
-1. **跨线程回调必须用信号**：`QTimer.singleShot` 只能在主线程调用——从工作线程调用会**静默失败**（回调永不执行），症状是聊天「正在输入」永远转圈。信号 emit 是官方线程安全通道，自动排队投递回主线程（≈ Swift 的 `Task { @MainActor in }`）。
-2. **坐标系翻转**：Qt 的 y 轴向下（AppKit 向上），下落、头顶定位、重力判断的符号全部相反——移植时最容易漏翻的是**条件判断里的不等号**。
-3. **单一手势自判点击/拖拽**：真人点击必带几像素手抖，按下时记起点，松手按总位移 <6px 判定为戳，否则是真拖拽——判决权在自己手里，不给手势竞争裁量的空间。
-4. **mac 上 `Qt.Tool` 是 NSPanel**：默认 `hidesOnDeactivate=True`，App 一失活窗口就藏。桌宠永不成为活跃 App，所以必须 `setHidesOnDeactivate_(False)` + 全空间跟随，否则「每次点一下别的应用，桌宠就消失」。
-5. **内容自适应尺寸要「先量后画」**：QFontMetrics 实测文本宽度再决定窗口宽高；换内容 resize 后还要**按记忆的位置重新居中**（跟随逻辑依赖的事件流，在桌宠静止时不来）。
-
 ## 换皮肤
 
 帧序列命名：`idle_0.png`、`walk_0.png`…，帧数与帧率在 `sprites/SpriteConfig.json` 里改，改完重启生效。
