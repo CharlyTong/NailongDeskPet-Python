@@ -11,11 +11,12 @@ Mac 版在这个窗口上踩过的两个大坑，Qt 里的对应解法：
      "背景写死白色 + 文字跟随主题"在深色模式 = 白字白底（Mac 版的第 4 个坑）。
 """
 
-from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve
+from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QRect
 from PySide6.QtGui import QColor, QFont, QFontMetrics, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import QApplication, QWidget
 
 from pet_engine import BUBBLE_W, BUBBLE_H, PET_SIZE
+from pet_window import mac_join_all_spaces
 
 
 class Bubble(QWidget):
@@ -40,6 +41,7 @@ class Bubble(QWidget):
         self._text = text
         self.setGeometry(self.x(), self.y(), BUBBLE_W, BUBBLE_H)
         self.show()
+        mac_join_all_spaces(self)   # 每次显示都确保加入所有空间（首次 show 后 winId 才有效）
         self.raise_()
         self._anim.start()
         self.update()
@@ -59,11 +61,11 @@ class Bubble(QWidget):
 
         # 气泡身体（圆角矩形）+ 尾巴（三角，指向下方桌宠的头顶）
         body = QPainterPath()
-        body.addRoundedRect(4, 4, w - 8, h - 26, 14, 14)
+        body.addRoundedRect(4, 4, w - 8, h - 28, 14, 14)
         tail = QPainterPath()
         cx = w / 2
-        tail.moveTo(cx - 11, h - 23)
-        tail.lineTo(cx + 11, h - 23)
+        tail.moveTo(cx - 11, h - 25)
+        tail.lineTo(cx + 11, h - 25)
         tail.lineTo(cx - 4, h - 3)     # 尾巴略偏，指向"说话者"
         tail.closeSubpath()
         balloon = body.united(tail)    # 并集：尾巴和身体自动无缝焊接
@@ -71,27 +73,26 @@ class Bubble(QWidget):
         p.setBrush(QColor(255, 255, 255, 242))
         p.drawPath(balloon)
 
-        # 文字：黑色、最多 2 行、超出省略（防 AI 长回复撑爆气泡）
+        # 文字：黑色、12 号、最多 3 行、超出末行省略。
+        # 折行算法：逐行"装到装不下为止"（CJK 字符可以任意位置断行）
         p.setPen(QColor(20, 20, 20))
         f = QFont()
-        f.setPointSize(13)
+        f.setPointSize(12)
         p.setFont(f)
         fm = QFontMetrics(f)
-        rect_w = w - 36
-        words = self._text
-        lines = []
-        while words and len(lines) < 2:
-            line = fm.elidedText(words, Qt.ElideRight, rect_w)
-            if fm.horizontalAdvance(line) < rect_w:      # 没被省略 = 全装下了
-                lines.append(line)
-                words = ""
-            else:                                        # 先截一行，剩余进下一行
-                cut = len(words)
-                while cut > 1 and fm.horizontalAdvance(words[:cut]) > rect_w:
-                    cut -= 1
-                lines.append(words[:cut])
-                words = words[cut:]
-        if words:                                        # 两行还装不下：第二行加省略号
-            lines[1] = fm.elidedText(lines[1] + words, Qt.ElideRight, rect_w)
-        p.drawText(18, 4, rect_w, h - 26,
-                   Qt.AlignCenter | Qt.TextWordWrap, "\n".join(lines))
+        rect_w = w - 40
+        lines, remaining = [], self._text
+        while remaining and len(lines) < 3:
+            cut = len(remaining)
+            while cut > 0 and fm.horizontalAdvance(remaining[:cut]) > rect_w:
+                cut -= 1
+            if cut == 0:
+                cut = 1
+            lines.append(remaining[:cut])
+            remaining = remaining[cut:]
+        if remaining:                                    # 三行仍装不下：末行加省略号
+            lines[-1] = fm.elidedText(lines[-1] + remaining,
+                                      Qt.ElideRight, rect_w)
+        p.drawText(QRect(20, 4, rect_w, h - 28),
+                   Qt.AlignVCenter | Qt.AlignHCenter | Qt.TextWordWrap,
+                   "\n".join(lines))
