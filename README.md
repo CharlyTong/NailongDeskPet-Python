@@ -26,6 +26,20 @@
 Python 3.9+（唯一依赖 PySide6；API 请求用标准库 urllib，零额外依赖）。
 可选配 DeepSeek API Key（https://platform.deepseek.com），没有则无 AI 功能但桌宠照常运行。
 
+## 打包成独立可执行文件（免装 Python）
+
+打包必须**在目标平台上做**（打包的本质是嵌入当前平台的解释器）：
+
+- **Windows（出 exe）**：把仓库放到 Windows 机器上，双击 `build.bat` → 产物 `dist\NailongDeskPet.exe`。把 exe 和你的 `config.json` 放同一文件夹，双击即可，无需安装任何东西。
+- **macOS（出 .app）**：`pip install pyinstaller && python -m PyInstaller NailongDeskPet.spec` → `dist/NailongDeskPet.app`。
+
+打包后的文件布局约定（见 `paths.py`）：
+
+| 类型 | 源码运行 | 打包后 |
+|---|---|---|
+| 只读资源 `sprites/` | 仓库目录 | 打进 exe 内部（解包临时目录） |
+| `config.json` / `chat_history.json` | 仓库目录 | **exe 旁边**（用户可编辑/备份） |
+
 ## 快速开始
 
 **Windows（PowerShell）**：
