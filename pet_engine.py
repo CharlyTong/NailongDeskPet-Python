@@ -197,7 +197,7 @@ class PetEngine(QObject):
         dist = ((gx - self._drag_start[0]) ** 2 + (gy - self._drag_start[1]) ** 2) ** 0.5
         if dist < 6:
             self._x, self._y = self._drag_base       # 弹回按下前位置
-            if self._y > self._ground_y() + GROUND_GAP:   # 半空被"戳"到：继续掉
+            if self._y < self._ground_y() - GROUND_GAP:   # 半空被"戳"到：继续掉
                 self._vy = 0
                 self._set_state("fall")
             else:
@@ -205,7 +205,7 @@ class PetEngine(QObject):
                 self.pet_clicked()
             self._sync()
             return
-        if self._y > self._ground_y() + GROUND_GAP:  # 半空松手 → 掉落
+        if self._y < self._ground_y() - GROUND_GAP:  # 半空松手 → 掉落
             self._vy = 0
             self._set_state("fall")
         else:                                        # 贴地松手 → 站好
